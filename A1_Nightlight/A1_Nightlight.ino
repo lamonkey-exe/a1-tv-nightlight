@@ -55,9 +55,8 @@ void setup() {
   pinMode(CONTROL_BUTTON_PIN, INPUT_PULLUP);  // internal pull up
   pinMode(DIY_BUTTON_PIN, INPUT_PULLUP);  // internal pull up
 
-  // Turn on Serial for debugging
+  // Turn on Serial
   Serial.begin(9600);
-  // Serial.println("Red, Green, Blue");
 
   // Set initial colors
   setColor(_rgbLedValues[RED], _rgbLedValues[GREEN], _rgbLedValues[BLUE]);
@@ -75,7 +74,6 @@ void loop() {
   // Mode Swap Button Handler
   if (currTimestampMs - _modeButtonUpdatedTimestampMs >= DEBOUNCE_DELAY_MS) {
     if (modeButtonState == HIGH && lastModeButtonState == LOW) {
-      // Serial.println(currMode);
       colorLock = HIGH;
       currMode++;
       if (currMode > 3) {
@@ -96,13 +94,10 @@ void loop() {
   switch(currMode) {
     case 0: {  // Off mode
       setColor(0, 0, 0);
-      Serial.println("OFF MODE");
       break;
     }
 
     case 1: {  // Crossfade mode
-      // Serial.println("CROSSFADE MODE");
-
       // Check to see if "delay" period has passed
       if (currTimestampMs - _stepValueUpdatedTimestampMs >= TIME_ON_EACH_FADE_VAL_MS) {
         _stepValueUpdatedTimestampMs = currTimestampMs;
@@ -136,8 +131,6 @@ void loop() {
     }
 
     case 2: {  // Lofi Input Mode
-      // Serial.println("DIY MODE");
-      Serial.println(diyColor);
       colorLockHandler(currTimestampMs);
       bool diyButtonState = digitalRead(DIY_BUTTON_PIN);
 
@@ -187,9 +180,7 @@ void loop() {
     }
 
     case 3: {  // Joystick Mode, basic controls based off of https://www.youtube.com/watch?v=vo7SbVhW3pE&t=466s
-      // Serial.println("JOYSTICK MODE");
       colorLockHandler(currTimestampMs);
-      // Serial.println(colorLock);
       
       if (colorLock) {
         if (currTimestampMs - _controllerUpdatedTimestampMs >= TIME_ON_CONTROLLER_MS) {
@@ -197,11 +188,6 @@ void loop() {
           int y_value = analogRead(CONTROL_Y_PIN);
 
           _controllerUpdatedTimestampMs = currTimestampMs;
-
-          // Serial.print("0, 1023, ");
-          // Serial.print(x_value);
-          // Serial.print(" ");
-          // Serial.println(y_value);
           
           // x zones
           if (x_value < 350) {
@@ -223,7 +209,6 @@ void loop() {
 
           // zones 1-9 in numpad notation
           zone = y_zone * 3 + x_zone + 1;
-          Serial.println(zone);
 
           switch(zone) {
             case 1:  // -blue value
@@ -287,27 +272,12 @@ void loop() {
 }
 
 void setColor(int red, int green, int blue) {
-  Serial.print(red);
-  Serial.print(", ");
-  Serial.print(green);
-  Serial.print(", ");
-  Serial.println(blue);
-
   if (currMode == 1) {
     // Read light level and set brightness caps
     int photocellVal = analogRead(PHOTOCELL_PIN);
     float normalizedLightVal = photocellVal / 1000.0;  // 0.0-1.0
     float invertedLightVal = 1.0 - normalizedLightVal;  // dark=1.0, bright=0.0
     float brightnessLevel = pow(invertedLightVal, 3);
-
-    // Serial.print("Raw Light: ");
-    // Serial.print(photocellVal);
-    // Serial.print(", Normalized: ");
-    // Serial.print(normalizedLightVal);
-    // Serial.print(", Inverted: ");
-    // Serial.print(invertedLightVal);
-    // Serial.print(", Brightness: ");
-    // Serial.println(brightnessLevel);
 
     float rf = (red / 255.0) * brightnessLevel;
     float gf = (green / 255.0) * brightnessLevel;
